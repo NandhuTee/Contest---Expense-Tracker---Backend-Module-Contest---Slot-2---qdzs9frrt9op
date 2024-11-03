@@ -1,22 +1,39 @@
 const Expense = require('../models/expenseModel');
 
+// Add Expense
 exports.addExpense = async (req, res) => {
   try {
-    //Write a code here for addExpense
-    res
-      .status(201)
-      .json({ message: 'Expense added successfully', expense: newExpense });
+    const { amount, category, description } = req.body;
+    const userId = req.user.userId; // Assume the user ID is stored in the decoded JWT
+
+    const newExpense = await Expense.create({
+      amount,
+      category,
+      description,
+      user: userId,
+    });
+
+    res.status(201).json({
+      message: 'Expense added successfully',
+      expense: newExpense,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
+// View Expenses
 exports.viewExpenses = async (req, res) => {
   try {
-    //Write a code here
+    const userId = req.user.userId; // Assume the user ID is stored in the decoded JWT
 
-    res.json({ message: 'View expenses', expenses });
+    const expenses = await Expense.find({ user: userId });
+
+    res.status(200).json({
+      message: 'Expenses retrieved successfully',
+      expenses,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -26,9 +43,23 @@ exports.viewExpenses = async (req, res) => {
 // Update Expense
 exports.updateExpense = async (req, res) => {
   try {
-    // Write a code here
+    const { expenseId } = req.params;
+    const { amount, category, description } = req.body;
 
-    res.json({ message: 'Expense updated successfully', expense });
+    const updatedExpense = await Expense.findByIdAndUpdate(
+      expenseId,
+      { amount, category, description },
+      { new: true }
+    );
+
+    if (!updatedExpense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+
+    res.status(200).json({
+      message: 'Expense updated successfully',
+      expense: updatedExpense,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -38,9 +69,15 @@ exports.updateExpense = async (req, res) => {
 // Delete Expense
 exports.deleteExpense = async (req, res) => {
   try {
-    //Write a code here
+    const { expenseId } = req.params;
 
-    res.json({ message: 'Expense deleted successfully' });
+    const deletedExpense = await Expense.findByIdAndDelete(expenseId);
+
+    if (!deletedExpense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+
+    res.status(200).json({ message: 'Expense deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
